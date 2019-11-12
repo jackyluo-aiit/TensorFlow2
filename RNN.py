@@ -43,3 +43,55 @@ class RNN(tf.keras.Model):
         else:
             return tf.nn.softmax(logits)
 
+    def predict(self, inputs, temperature=1.):
+        batch_size, _ = tf.shape(inputs)
+        logits = self(inputs, from_logits=True)
+        prob = tf.nn.softmax(logits / temperature).numpy()
+        return np.array([np.random.choice(self.num_chars, p=prob[i, :])
+                         for i in range(batch_size.numpy())])
+
+
+batch_size = 50
+num_batch = 50
+seq_length = 50
+
+data_loader = DataLoader()
+print(data_loader.text)
+rnn_model = RNN(len(data_loader.chars), batch_size, seq_length)
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+for batch_index in range(batch_size):
+    X, Y = data_loader.get_batch(seq_length, batch_size)
+    with tf.GradientTape() as tape:
+        pred = rnn_model(X)
+        loss = tf.losses.sparse_categorical_crossentropy(y_true=Y, y_pred=pred)
+        loss = tf.reduce_mean(loss, axis=0)
+    grads = tape.gradient(target=loss, sources=rnn_model.variables)
+    optimizer.apply_gradients(zip(grads, rnn_model.variables))
+
+# evaluation
+X, _ = data_loader.get_batch(seq_length, 1)
+print(X)
+for i in X[0]:
+    print(data_loader.indices_char[i], end='', flush=True)
+for _ in range(100):
+    pred = rnn_model.predict(X, 1.0)
+    X = np.concatenate([X[:, :], np.expand_dims(pred, axis=1)], axis=-1)
+    # pred = rnn_model(X)
+    # # print(pred[0])
+    # pred = np.squeeze(pred)
+    # pred_index = np.random.choice(rnn_model.num_chars, p=pred)
+    # # pred_index = tf.argmax(pred)
+    # # pred_index = pred_index.numpy()
+    # # print(pred_index)
+    # # print(data_loader.indices_char[pred_index])
+    # # print(pred)
+    # # pred_index = np.expand_dims(pred_index, axis=0)
+    # # print(np.shape(pred_index))
+    # # print(np.shape(X))
+    # X = np.concatenate([X[0, :], np.expand_dims(pred_index, axis=1)], axis=-1)
+    # X = np.expand_dims(X, axis=0)
+    print(X)
+for i in X[0]:
+    print(data_loader.indices_char[i], end='', flush=True)
+
+
