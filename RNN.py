@@ -4,8 +4,7 @@ import numpy as np
 
 class DataLoader():
     def __init__(self):
-        path = tf.keras.utils.get_file('nietzsche.txt',
-                                       origin='https://s3.amazonaws.com/text-datasets/nietzsche.txt')
+        path = 'nietzsche.txt'
         with open(path, encoding='utf-8') as f:
             self.raw_text = f.read().lower()
         self.chars = sorted(list(set(self.raw_text)))

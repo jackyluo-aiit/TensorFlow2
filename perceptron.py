@@ -7,7 +7,7 @@ import numpy as np
 class MNISTLoader(object):
     def __init__(self):
         mnist = tf.keras.datasets.mnist
-        (self.train_data, self.train_label), (self.test_data, self.test_label) = mnist.load_data()
+        (self.train_data, self.train_label), (self.test_data, self.test_label) = mnist.load_data("mnist.npz")
         # MNIST中的图像默认为uint8（0-255的数字）。以下代码将其归一化到0-1之间的浮点数，并在最后增加一维作为颜色通道
         self.train_data = np.expand_dims(self.train_data.astype(np.float32) / 255.0, axis=-1)  # [60000, 28, 28, 1]
         self.test_data = np.expand_dims(self.test_data.astype(np.float32) / 255.0, axis=-1)  # [10000, 28, 28, 1]
