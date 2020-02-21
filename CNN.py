@@ -6,7 +6,8 @@ tfconfig.gpu_options.allow_growth = True
 session = InteractiveSession(config=tfconfig)
 import numpy as np
 
-print(tf.__version__)
+print("TensorFlow version: "+tf.__version__)
+print("Using %s"%("GPU" if(tf.test.is_gpu_available()) else "CPU"))
 W = np.array([[
     [0, 0, -1],
     [0, 1, 0],
