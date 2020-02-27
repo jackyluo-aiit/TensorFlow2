@@ -9,7 +9,7 @@ from tensorflow.keras import layers
 from tensorflow.keras.callbacks import TensorBoard
 import pandas as pd
 
-path = "/Users/luoxuqi/PycharmProjects/TensorFlow2/sentiment labelled sentences"
+path = "/sentiment labelled sentences"
 filepath_dict = {'yelp': 'sentiment labelled sentences/yelp_labelled.txt',
                  'amazon': 'sentiment labelled sentences/amazon_cells_labelled.txt',
                  'imdb': 'sentiment labelled sentences/imdb_labelled.txt'}

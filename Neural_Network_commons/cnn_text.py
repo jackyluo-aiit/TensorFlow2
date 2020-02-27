@@ -5,6 +5,7 @@ import tensorflow_datasets as tfds
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers
+import sys
 
 cnn_model_name = 'cnn_text_classification.h5'
 rnn_model_name = 'rnn_text_classification.h5'
@@ -15,15 +16,32 @@ initial_epochs = 10
 validation_steps = 20
 
 print('loading data...')
-(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
 data, info = tfds.load(name="imdb_reviews/subwords8k",
                        with_info=True,
                        as_supervised=True, )
 
 test_dataset = data['test']
 train_dataset = data['train']
+print(train_dataset)
+sys.exit()
 encoder = info.features['text'].encoder
 print('Vocabulary size: {}'.format(encoder.vocab_size))
+# imdb_builder = tfds.builder(name="imdb_reviews/subwords8k")
+# imdb_builder.download_and_prepare()
+# info = imdb_builder.info
+# print("dataset name {} \ndataset size: {}\ndataset features: {}".format(info.name, info.splits, info.features))
+# test_dataset = imdb_builder.as_dataset(split="test")
+# train_dataset = imdb_builder.as_dataset(split="train")
+# for train_example in train_dataset.take(1):
+#     sentence, label = train_example["text"], train_example["label"]
+#     print("sentence: {}".format(sentence.shape))
+#     print("label: {}".format(label.shape))
+# encoder = info.features['text'].encoder
+# encoder = info.encoder
+# print(test_dataset.info)
+# print('Vocabulary size: {}'.format(encoder.vocab_size))
+# print("Vocabulary detail: {}".format(encoder.subwords))
+# print("Vocabulary decode example: ", encoder.decode(train_example["text"]))
 BATCH_SIZE = 128
 SHUFFLE_SIZE = 10000
 for sentence, label in train_dataset.take(1):
@@ -52,6 +70,7 @@ print(test_batches)
 for sentence, label in train_batches.take(2):
     print(sentence)
     print(label)
+
 
 # tokenize and padding 0 behind
 # tokenizer = Tokenizer(num_words=10000)
