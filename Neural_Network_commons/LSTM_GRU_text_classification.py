@@ -55,7 +55,8 @@ db_test = tf.data.Dataset.from_tensor_slices((x_test, y_test))
 db_test = db_test.batch(batchsz, drop_remainder=True)
 print('x_train shape:', x_train.shape, tf.reduce_max(y_train), tf.reduce_min(y_train))
 print('x_test shape:', x_test.shape)
-
+# print(list(db_train.as_numpy_iterator()))
+# sys.exit()
 
 class GRUClassification(tf.keras.Model):
     def __init__(self, units, embedding_matrix):
@@ -98,8 +99,6 @@ class LSTMClassification(tf.keras.Model):
         z = self.LSTM(x)
         out = self.output_layer(z)
         prob = tf.sigmoid(out)
-        return prob
-
         return prob
 
 
