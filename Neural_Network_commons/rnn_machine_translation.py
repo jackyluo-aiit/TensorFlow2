@@ -163,67 +163,105 @@ def filter_max_length(element, max_length=max_len):
                           tf.strings.length(element["zh"]) <= max_length)
 
 
-class SimpleRNN(tf.keras.Model):
-    def __init__(self, input_vocab_size, target_vocab_size, embed_depth):
-        super(SimpleRNN, self).__init__()
-        self.input_vocab_size = input_vocab_size
-        self.target_vocab_size = target_vocab_size
-        self.embed_depth = embed_depth
-        self.embedding = tf.keras.layers.Embedding(self.input_vocab_size, self.embed_depth)
-        self.rnn = tf.keras.Sequential([
-            tf.keras.layers.GRU(state_len, dropout=0.5, return_sequences=True),
-            tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1024, activation='relu')),
-            tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(self.target_vocab_size, activation='softmax'))
-        ])
+# class SimpleRNN(tf.keras.Model):
+#     def __init__(self, input_vocab_size, target_vocab_size, embed_depth):
+#         super(SimpleRNN, self).__init__()
+#         self.input_vocab_size = input_vocab_size
+#         self.target_vocab_size = target_vocab_size
+#         self.embed_depth = embed_depth
+#         self.embedding = tf.keras.layers.Embedding(self.input_vocab_size, self.embed_depth)
+#         self.rnn = tf.keras.Sequential([
+#             tf.keras.layers.GRU(state_len, dropout=0.5, return_sequences=True),
+#             tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1024, activation='relu')),
+#             tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(self.target_vocab_size, activation='softmax'))
+#         ])
+#
+#     def call(self, inputs):
+#         embeded_inputs = self.embedding(inputs)
+#         out = self.rnn(embeded_inputs)
+#         return out
+#
+#
+# def simpleRNN_training(data, test, input_vocab_size, target_vocab_size):
+#     model = SimpleRNN(input_vocab_size, target_vocab_size, embed_depth)
+#     model.compile(loss="sparse_categorical_crossentropy",
+#                   optimizer=tf.optimizers.Adam(learning_rate),
+#                   metrics=['accuracy'])
+#     model.fit(data, epochs=epoch_size,
+#               validation_data=test,
+#               steps_per_epoch=num_train_examples // batch_size,
+#               validation_steps=num_examples // batch_size)
+#     model.evaluate(test)
+#     print('Finish training')
+#
+#
+# class BidirectionRNN(tf.keras.Model):
+#     def __init__(self, input_vocab_size, target_vocab_size, embed_depth):
+#         super(BidirectionRNN, self).__init__()
+#         self.input_vocab_size = input_vocab_size
+#         self.target_vocab_size = target_vocab_size
+#         self.embed_depth = embed_depth
+#         self.embedding = tf.keras.layers.Embedding(input_vocab_size, embed_depth)
+#         self.rnn = tf.keras.Sequential([
+#             tf.keras.layers.Bidirectional(tf.keras.layers.GRU(state_len, dropout=0.5, return_sequences=True)),
+#             tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1024, activation='relu')),
+#             tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(self.target_vocab_size, activation='softmax'))
+#         ])
+#
+#     def call(self, inputs):
+#         embed_input = self.embedding(inputs)
+#         out = self.rnn(embed_input)
+#         return out
+#
+#
+# def bd_rnn_training(data, test, input_vocab_size, target_vocab_size):
+#     model = BidirectionRNN(input_vocab_size, target_vocab_size, embed_depth)
+#     model.compile(loss="sparse_categorical_crossentropy",
+#                   optimizer=tf.keras.optimizers.Adam(learning_rate),
+#                   metrics=['accuracy'])
+#     model.fit(data, epochs=epoch_size,
+#               validation_data=test,
+#               steps_per_epoch=num_train_examples // batch_size,
+#               validation_steps=num_examples // batch_size)
+#     model.evaluate(test)
+#     print("Finished training")
 
-    def call(self, inputs):
-        embeded_inputs = self.embedding(inputs)
-        out = self.rnn(embeded_inputs)
-        return out
 
-
-def simpleRNN_training(data, test, input_vocab_size, target_vocab_size):
-    model = SimpleRNN(input_vocab_size, target_vocab_size, embed_depth)
-    model.compile(loss="sparse_categorical_crossentropy",
-                  optimizer=tf.optimizers.Adam(learning_rate),
-                  metrics=['accuracy'])
-    model.fit(data, epochs=epoch_size,
-              validation_data=test,
-              steps_per_epoch=num_train_examples//batch_size,
-              validation_steps=num_examples//batch_size)
-    model.evaluate(test)
-    print('Finish training')
-
-
-class BidirectionRNN(tf.keras.Model):
-    def __init__(self, input_vocab_size, target_vocab_size, embed_depth):
-        super(BidirectionRNN, self).__init__()
+class EnDeRNNModel(tf.keras.Model):
+    def __init__(self, output_seq_len, input_vocab_size, target_vocab_size, embed_depth):
+        super(EnDeRNNModel, self).__init__()
+        self.output_seq_len = output_seq_len
         self.input_vocab_size = input_vocab_size
         self.target_vocab_size = target_vocab_size
         self.embed_depth = embed_depth
         self.embedding = tf.keras.layers.Embedding(input_vocab_size, embed_depth)
-        self.rnn = tf.keras.Sequential([
-            tf.keras.layers.Bidirectional(tf.keras.layers.GRU(state_len, dropout=0.5, return_sequences=True)),
-            tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1024, activation='relu')),
-            tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(self.target_vocab_size, activation='softmax'))
-        ])
+        self.en_de_model = tf.keras.Sequential(
+            [tf.keras.layers.Bidirectional(tf.keras.layers.GRU(state_len, return_sequences=True)),
+             tf.keras.layers.RepeatVector(self.output_seq_len),
+             tf.keras.layers.Bidirectional(tf.keras.layers.GRU(state_len, return_sequences=True)),
+             tf.keras.layers.Dropout(0.5),
+             tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(1024, activation='relu')),
+             tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(self.target_vocab_size, activation='softmax'))]
+        )
 
-    def call(self, inputs):
-        embed_input = self.embedding(inputs)
-        out = self.rnn(embed_input)
+    def call(self, inputs, **kwargs):
+        embed_inputs = self.embedding(inputs)
+        print(embed_inputs.shape)
+        out = self.en_de_model(embed_inputs)
         return out
 
 
-def bd_rnn_training(data, test, input_vocab_size, target_vocab_size):
-    model = BidirectionRNN(input_vocab_size, target_vocab_size, embed_depth)
-    model.compile(loss="sparse_categorical_crossentropy",
+def ende_training(data, test, input_vocab_size, target_vocab_size):
+    model = EnDeRNNModel(max_len, input_vocab_size, target_vocab_size, embed_depth)
+    model.compile(loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   optimizer=tf.keras.optimizers.Adam(learning_rate),
                   metrics=['accuracy'])
     model.fit(data, epochs=epoch_size,
               validation_data=test,
-              steps_per_epoch=num_train_examples//batch_size,
-              validation_steps=num_examples//batch_size)
-    model.evaluate(test)
+              steps_per_epoch=num_train_examples // batch_size,
+              validation_steps=num_examples // batch_size)
+    model.evaluate(test, steps=num_examples // batch_size)
+    model.summary()
     print("Finished training")
 
 
@@ -242,7 +280,6 @@ if __name__ == '__main__':
     dataset = builder.as_dataset()
     train_data = dataset["train"]
     test_data = dataset["test"]
-    index = 0
     train_sentences = tfds.as_numpy(train_data)
     test_sentences = tfds.as_numpy(test_data)
     en_sentences = []
@@ -395,4 +432,4 @@ if __name__ == '__main__':
     # db_test = tf.data.Dataset.from_tensor_slices((en_test, zh_test))
     # db_test = db_test.batch(batch_size, drop_remainder=True)
     # print(list(db_train.as_numpy_iterator()))
-    bd_rnn_training(db_train, db_test, subword_encoder_en.vocab_size, subword_encoder_zh.vocab_size)
+    ende_training(db_train, db_test, subword_encoder_en.vocab_size, subword_encoder_zh.vocab_size)
